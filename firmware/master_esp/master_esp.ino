@@ -13,8 +13,16 @@
 #define ENA 17
 #define ENB 16
 
+#define ECHO 22
+#define TRIG 23
+
 #define servoHorizontalPin 18
 #define servoVerticalPin 19
+
+#define HORIZ_MIN ((int)45)
+#define HORIZ_MAX ((int)135)
+#define VERTIC_MIN ((int)45)
+#define VERTIC_MAX ((int)135)
 
 uint8_t pwm_req;
 String request;
@@ -22,22 +30,24 @@ String request;
 const char* ssid = "ESP_safesight";
 const char* password = "ESP_safesight";
 
-IPAddress local_IP(192, 168, 1, 1);  
-IPAddress gateway(192, 168, 1, 1);
+IPAddress local_IP(192, 168, 4, 1);  
+IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 WiFiServer server(10000);
 WiFiClient client;
 
-
 Servo servoHorizontal;
 Servo servoVertical;
+
+volatile int duration;
 
 // function declaration //
 String removeWhitespaces(String);
 String receive_req(void);
 
 void servo_scan();
+int distance_scan();
 
 void motor_A_forw(void);
 void motor_B_forw(void);
@@ -73,6 +83,11 @@ void setup() {
   servoHorizontal.write(45);
   servoVertical.write(45);
 
+  // Distance sensor
+  pinMode(TRIG, OUTPUT);
+  digitalWrite(TRIG, LOW);
+  pinMode(ECHO, INPUT);
+
   // wifi setup
   if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
     Serial.println("Failed to configure static IP for AP");
@@ -89,9 +104,6 @@ void setup() {
 }
 
 void loop() {
-  servo_scan();
-
-  /*
   client = server.available();
   if (client)
   {
@@ -121,6 +133,10 @@ void loop() {
         {
           move_stop();
         }
+        else if (request == "scandistance") 
+        {
+          servo_scan();
+        }
         else 
         {
           client.println("wrong command");
@@ -128,7 +144,6 @@ void loop() {
       }
     }
   }
-  */
 }
 
 
@@ -143,7 +158,8 @@ String receive_req()
   return req;
 }
 
-String removeWhitespaces(String str) {
+String removeWhitespaces(String str) 
+{
   String result = "";
   for (unsigned int i = 0; i < str.length(); i++) {
     if (!isWhitespace(str[i])) {
@@ -153,27 +169,61 @@ String removeWhitespaces(String str) {
   return result;
 }
 
-void servo_scan() {
+void servo_scan() 
+{
+  servoHorizontal.write(45);
+  servoVertical.write(45);
+
   int flag = 1;
-  for (int i = 45; i <= 135; i+=2) {
+  for (int i = HORIZ_MIN; i <= HORIZ_MAX; i+=2) {
     servoHorizontal.write(i);
-    delay(15);
+
+    Serial.print("horiz: ");
+    Serial.println(i);
+
+    delay(30);
     if (flag == 1) {
-      for (int i = 45; i <= 135; i+=2) {
-        servoVertical.write(i);
-        //measurement and transmit
-        delay(30);
+      for (int j = VERTIC_MIN; j <= VERTIC_MAX; j+=2) {
+        servoVertical.write(j);
+
+        duration = distance_scan();
+        client.print(duration);
+        client.print(',');
+
+        Serial.print(duration);
+        Serial.print(',');
+
+        delay(50);
       }
     } else {
-      for (int i = 135; i >= 45; i-=2) {
-        servoVertical.write(i);
-        //measurement and transmit
-        delay(30);
+      for (int j = VERTIC_MAX; j >= VERTIC_MIN; j-=2) {
+        servoVertical.write(j);
+        
+        duration = distance_scan();
+        client.print(duration);
+        client.print(',');
+
+        Serial.print(duration);
+        Serial.print(',');
+
+        delay(50);
       }
     }
     flag *= -1;
   }
-  //send end of transmission
+  client.print('\n');
+}
+
+int distance_scan() {
+  digitalWrite(TRIG, HIGH);       
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG, LOW);       
+  int result = pulseIn(ECHO, HIGH);
+
+  if (result > 38000) result = 38000;
+   
+  return result;
 }
 
 void motor_A_forw(){
