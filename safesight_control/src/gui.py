@@ -4,7 +4,7 @@ from src.controler import Controler
 
 
 class Gui:
-    def __init__(self, controler: Controler = None):
+    def __init__(self, controler: Controler):
         self.controler = controler
 
     def setup(self):
@@ -13,13 +13,35 @@ class Gui:
         dpg.setup_dearpygui()
 
         # movement control
-        with dpg.window(label="Movement control", autosize=True):
+        with dpg.window(label="Movement control", autosize=True, no_close=True):
             dpg.add_text("Use the keyboard to move the robot")
-            dpg.add_text("W to move forwards", tag="text_w")
-            dpg.add_text("S to move backwards", tag="text_s")
-            dpg.add_text("A to turn left", tag="text_a")
-            dpg.add_text("D to turn right", tag="text_d")
+            dpg.add_text("W to move forwards", tag="movement_w")
+            dpg.add_text("S to move backwards", tag="movement_s")
+            dpg.add_text("A to turn left", tag="movement_a")
+            dpg.add_text("D to turn right", tag="movement_d")
 
+        # camera stream
+        with dpg.texture_registry():
+            dpg.add_raw_texture(
+                width=640,
+                height=480,
+                default_value=self.controler.get_camera_view(),
+                format=dpg.mvFormat_Float_rgb,
+                tag="camera_view",
+            )
+
+        with dpg.window(label="Camera image", autosize=True, no_close=True):
+            dpg.add_button(
+                label="Toggle flash",
+                callback=self.camera_flash_toggle_callback,
+                tag="camera_flash_toggle",
+            )
+            dpg.add_text(
+                "Flash OFF", color=(255, 0, 0, 255), tag="camera_flash_indicator"
+            )
+            dpg.add_image("camera_view")
+
+        # global keypresses
         with dpg.handler_registry():
             dpg.add_key_down_handler(
                 dpg.mvKey_W, callback=self.movement_control_callback, user_data="w"
@@ -56,16 +78,22 @@ class Gui:
 
         match user_data:
             case "w":
-                dpg.configure_item("text_w", color=(0, 255, 255, 255))
+                dpg.configure_item("movement_w", color=(0, 255, 255, 255))
             case "a":
-                dpg.configure_item("text_a", color=(0, 255, 255, 255))
+                dpg.configure_item("movement_a", color=(0, 255, 255, 255))
             case "s":
-                dpg.configure_item("text_s", color=(0, 255, 255, 255))
+                dpg.configure_item("movement_s", color=(0, 255, 255, 255))
             case "d":
-                dpg.configure_item("text_d", color=(0, 255, 255, 255))
+                dpg.configure_item("movement_d", color=(0, 255, 255, 255))
 
     def movement_control_reset_callback(self, sender, app_data, user_data):
-        dpg.configure_item("text_w", color=(-255, 0, 0, 255))
-        dpg.configure_item("text_a", color=(-255, 0, 0, 255))
-        dpg.configure_item("text_s", color=(-255, 0, 0, 255))
-        dpg.configure_item("text_d", color=(-255, 0, 0, 255))
+        dpg.configure_item("movement_w", color=(-255, 0, 0, 255))
+        dpg.configure_item("movement_a", color=(-255, 0, 0, 255))
+        dpg.configure_item("movement_s", color=(-255, 0, 0, 255))
+        dpg.configure_item("movement_d", color=(-255, 0, 0, 255))
+
+    def camera_flash_toggle_callback(self, sender, app_data, user_data):
+        if self.controler.toggle_flash():
+            dpg.configure_item("camera_flash_indicator", color=(0, 255, 0, 255))
+        else:
+            dpg.configure_item("camera_flash_indicator", color=(255, 0, 0, 255))
