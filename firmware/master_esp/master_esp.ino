@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
+#include <ESP32Servo.h>
+
 #define LED 2
 
 #define IN1 33
@@ -11,8 +13,8 @@
 #define ENA 17
 #define ENB 16
 
-#define MAX_PWM 255
-#define MIN_PWM 180
+#define servoHorizontalPin 18
+#define servoVerticalPin 19
 
 uint8_t pwm_req;
 String request;
@@ -20,25 +22,35 @@ String request;
 const char* ssid = "ESP_safesight";
 const char* password = "ESP_safesight";
 
-IPAddress local_IP(192, 168, 4, 1);  
-IPAddress gateway(192, 168, 4, 1);
+IPAddress local_IP(192, 168, 1, 1);  
+IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 WiFiServer server(10000);
 WiFiClient client;
 
+
+Servo servoHorizontal;
+Servo servoVertical;
+
+// function declaration //
 String removeWhitespaces(String);
-String receive_req();
+String receive_req(void);
 
-void motor_A_forw();
-void motor_B_forw();
-void motor_A_back();
-void motor_B_back();
+void servo_scan();
 
-void move_forw();
-void move_back();
-void move_right();
-void move_left();
+void motor_A_forw(void);
+void motor_B_forw(void);
+void motor_A_back(void);
+void motor_B_back(void);
+
+void move_forw(void);
+void move_back(void);
+void move_right(void);
+void move_left(void);
+void move_stop(void);
+
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -54,6 +66,12 @@ void setup() {
   // PWM motor speed outputs
   pinMode(ENA, OUTPUT);
   pinMode(ENB, OUTPUT);
+
+  // Servo setup
+  servoHorizontal.attach(servoHorizontalPin); 
+  servoVertical.attach(servoVerticalPin); 
+  servoHorizontal.write(45);
+  servoVertical.write(45);
 
   // wifi setup
   if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
@@ -71,6 +89,9 @@ void setup() {
 }
 
 void loop() {
+  servo_scan();
+
+  /*
   client = server.available();
   if (client)
   {
@@ -96,6 +117,10 @@ void loop() {
         {
           move_left();
         }
+        else if (request == "stop") 
+        {
+          move_stop();
+        }
         else 
         {
           client.println("wrong command");
@@ -103,6 +128,7 @@ void loop() {
       }
     }
   }
+  */
 }
 
 
@@ -125,6 +151,29 @@ String removeWhitespaces(String str) {
     }
   }
   return result;
+}
+
+void servo_scan() {
+  int flag = 1;
+  for (int i = 45; i <= 135; i+=2) {
+    servoHorizontal.write(i);
+    delay(15);
+    if (flag == 1) {
+      for (int i = 45; i <= 135; i+=2) {
+        servoVertical.write(i);
+        //measurement and transmit
+        delay(30);
+      }
+    } else {
+      for (int i = 135; i >= 45; i-=2) {
+        servoVertical.write(i);
+        //measurement and transmit
+        delay(30);
+      }
+    }
+    flag *= -1;
+  }
+  //send end of transmission
 }
 
 void motor_A_forw(){
@@ -151,6 +200,18 @@ void motor_B_back(){
   digitalWrite(IN4, HIGH);
 }
 
+void motor_A_stop(){
+  digitalWrite(ENB, LOW);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+}
+
+void motor_B_stop(){
+  digitalWrite(ENB, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
 
 void move_forw()
 {
@@ -161,7 +222,7 @@ void move_forw()
 void move_back()
 {
   motor_A_back();
-  motor_A_back();
+  motor_B_back();
 }
 
 void move_right()
@@ -174,5 +235,11 @@ void move_left()
 {
   motor_A_back();
   motor_B_forw();
+}
+
+void move_stop()
+{
+  motor_A_stop();
+  motor_B_stop();
 }
 // User code end
