@@ -8,7 +8,12 @@ class Controler:
         self.flash_active = False
 
     def get_camera_view(self):
-        return np.ones((480, 680, 3), dtype=np.float32).flatten() / 255
+        data = self.interface.get_image()
+        if not data:
+            return np.zeros((480, 640, 3), dtype="float32").flatten() / 255
+
+        img = np.array(data).astype("float32")
+        return img.flatten() / 255
 
     def toggle_flash(self):
         self.flash_active = not self.flash_active

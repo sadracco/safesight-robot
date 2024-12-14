@@ -1,3 +1,5 @@
+import threading
+
 import dearpygui.dearpygui as dpg
 from src.controler import Controler
 
@@ -30,14 +32,16 @@ class Gui:
             )
 
         with dpg.window(label="Camera image", autosize=True, no_close=True):
-            dpg.add_button(
-                label="Toggle flash",
-                callback=self.camera_flash_toggle_callback,
-                tag="camera_flash_toggle",
-            )
-            dpg.add_text(
-                "Flash OFF", color=(255, 0, 0, 255), tag="camera_flash_indicator"
-            )
+            with dpg.group(horizontal=True):
+                dpg.add_button(
+                    label="Toggle flash",
+                    callback=self.camera_flash_toggle_callback,
+                    tag="camera_flash_toggle",
+                )
+
+                dpg.add_text(
+                    "OFF", color=(255, 0, 0, 255), tag="camera_flash_indicator"
+                )
             dpg.add_image("camera_view")
 
         # global keypresses
@@ -66,6 +70,10 @@ class Gui:
             dpg.add_key_release_handler(
                 dpg.mvKey_D, callback=self.movement_control_reset_callback
             )
+
+        thread = threading.Thread(target=self.camera_update_thread)
+        thread.daemon = True
+        thread.start()
 
         dpg.show_viewport(maximized=True)
         dpg.start_dearpygui()
@@ -96,3 +104,7 @@ class Gui:
             dpg.configure_item("camera_flash_indicator", color=(0, 255, 0, 255))
         else:
             dpg.configure_item("camera_flash_indicator", color=(255, 0, 0, 255))
+
+    def camera_update_thread(self):
+        while True:
+            dpg.set_value("camera_view", self.controler.get_camera_view())

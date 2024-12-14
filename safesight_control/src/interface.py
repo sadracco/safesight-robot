@@ -1,6 +1,10 @@
+import http
+import http.client
 import socket
+from io import BytesIO
 
 import requests
+from PIL import Image
 
 
 class Interface:
@@ -10,14 +14,27 @@ class Interface:
         self.master_port = 10000
         self.camera_ip = "192.168.4.2"
 
-    def camera_url(self, endpoint):
-        return f"http://{self.master_ip}/{endpoint}"
+    def camera_request(self, endpoint):
+        try:
+            return requests.get(f"http://{self.camera_ip}/{endpoint}", timeout=(3, 5))
+        except:
+            return False
 
     def flashon(self):
-        requests.get(self.camera_url("/flashon"))
+        self.camera_request("flashon")
 
     def flashoff(self):
-        requests.get(self.camera_url("/flashoff"))
+        self.camera_request("flashoff")
+
+    def get_image(self):
+        response = self.camera_request("image")
+
+        if not response:
+            return False
+        if response.status_code == 200:
+            return Image.open(BytesIO(response.content))
+
+        return False
 
     def connect(self, ip, port):
         self.client_socket.connect((ip, port))
