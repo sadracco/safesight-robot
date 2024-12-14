@@ -1,8 +1,10 @@
+from src.controler import Controler
 from src.gui import Gui
 from src import interface
 
 def main():
-    gui = Gui()
+    controler = Controler()
+    gui = Gui(controler)
     gui.setup()
 
 if __name__ == "__main__":
