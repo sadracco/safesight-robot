@@ -1,14 +1,15 @@
 import http
 import http.client
-import socket
 import math
+import socket
 from io import BytesIO
+
 import requests
 from PIL import Image
 
 
 class Interface:
-    def __init__(self, ip = '192.168.1.1', port = 10000):
+    def __init__(self, ip="192.168.1.1", port=10000):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.ip = ip
         self.port = port
@@ -58,10 +59,10 @@ class Interface:
             return message
         except socket.error as e:
             return None
-        
+
     def move_forward(self):
         self.send_message("forward")
-    
+
     def move_backward(self):
         self.send_message("backward")
 
@@ -85,13 +86,25 @@ class Interface:
                 for j in range(-45, 46, 2):
                     r = measurements[k] / 5800
                     ver = math.radians(j)
-                    results.append((r * math.cos(ver) * math.cos(az), r * math.cos(ver) * math.sin(az),r * math.sin(ver)))
+                    results.append(
+                        (
+                            r * math.cos(ver) * math.cos(az),
+                            r * math.cos(ver) * math.sin(az),
+                            r * math.sin(ver),
+                        )
+                    )
                     k += 1
             else:
                 for j in range(45, -46, -2):
                     r = measurements[k] / 5800
                     ver = math.radians(j)
-                    results.append((r * math.cos(ver) * math.cos(az), r * math.cos(ver) * math.sin(az),r * math.sin(ver)))
+                    results.append(
+                        (
+                            r * math.cos(ver) * math.cos(az),
+                            r * math.cos(ver) * math.sin(az),
+                            r * math.sin(ver),
+                        )
+                    )
                     k += 1
             flag *= -1
         return results
@@ -109,3 +122,6 @@ class Interface:
                     return self.convert_to_polar(measurements)
                 if p != "":
                     measurements.append(int(p))
+
+    def __del__(self):
+        self.client_socket.close()

@@ -1,6 +1,7 @@
 import threading
 
 import dearpygui.dearpygui as dpg
+import matplotlib.pyplot as plt
 from src.controler import Controler
 
 
@@ -44,6 +45,14 @@ class Gui:
                 )
             dpg.add_image("camera_view")
 
+        # sensing tasks
+        with dpg.window(label="Sensing tasks", autosize=True, no_close=True):
+            dpg.add_button(
+                label="Toggle flash",
+                callback=self.camera_flash_toggle_callback,
+                tag="camera_flash_toggle",
+            )
+
         # global keypresses
         with dpg.handler_registry():
             dpg.add_key_down_handler(
@@ -85,15 +94,20 @@ class Gui:
 
         match user_data:
             case "w":
+                self.controler.forward()
                 dpg.configure_item("movement_w", color=(0, 255, 255, 255))
             case "a":
+                self.controler.left()
                 dpg.configure_item("movement_a", color=(0, 255, 255, 255))
             case "s":
+                self.controler.backward()
                 dpg.configure_item("movement_s", color=(0, 255, 255, 255))
             case "d":
+                self.controler.right()
                 dpg.configure_item("movement_d", color=(0, 255, 255, 255))
 
     def movement_control_reset_callback(self, sender, app_data, user_data):
+        self.controler.stop()
         dpg.configure_item("movement_w", color=(-255, 0, 0, 255))
         dpg.configure_item("movement_a", color=(-255, 0, 0, 255))
         dpg.configure_item("movement_s", color=(-255, 0, 0, 255))
