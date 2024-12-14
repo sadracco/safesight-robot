@@ -1,5 +1,4 @@
 import numpy as np
-
 from src.interface import Interface
 
 
@@ -13,5 +12,10 @@ class Controler:
 
     def toggle_flash(self):
         self.flash_active = not self.flash_active
+
+        if self.flash_active:
+            self.interface.flashon()
+        else:
+            self.interface.flashoff()
 
         return self.flash_active

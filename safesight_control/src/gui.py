@@ -1,5 +1,4 @@
 import dearpygui.dearpygui as dpg
-
 from src.controler import Controler
 
 

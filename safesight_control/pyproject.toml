@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.12"
 dearpygui = "^2.0.0"
 opencv-python = "^4.10.0.84"
+requests = "^2.32.3"
 
 
 [build-system]
