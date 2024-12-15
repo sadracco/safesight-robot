@@ -1,6 +1,7 @@
 import http
 import http.client
 import socket
+import sys
 from io import BytesIO
 import requests
 from PIL import Image
@@ -12,7 +13,13 @@ class Interface:
         self.camera_ip = "192.168.4.2"
 
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.connect((self.master_ip, self.master_port))
+        self.client_socket.settimeout(5)
+        try:
+            self.client_socket.connect((self.master_ip, self.master_port))
+        except Exception as e:
+            print(f"Unable to connect to {self.master_ip}")
+            print(e)
+            sys.exit(0)
 
     def camera_request(self, endpoint):
         try:

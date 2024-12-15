@@ -13,7 +13,9 @@ class Gui:
         dpg.setup_dearpygui()
 
         # movement control
-        with dpg.window(label="Movement control", autosize=True, no_close=True):
+        with dpg.window(
+            label="Movement control", autosize=True, no_close=True, pos=(10, 20)
+        ):
             dpg.add_text(
                 "Robot movement enabled", color=(0, 255, 0, 255), tag="movement_enabled"
             )
@@ -33,7 +35,9 @@ class Gui:
                 tag="camera_view",
             )
 
-        with dpg.window(label="Camera image", autosize=True, no_close=True):
+        with dpg.window(
+            label="Camera image", autosize=True, no_close=True, pos=(300, 20)
+        ):
             with dpg.group(horizontal=True):
                 dpg.add_button(
                     label="Toggle flash",
@@ -47,7 +51,9 @@ class Gui:
             dpg.add_image("camera_view")
 
         # sensing tasks
-        with dpg.window(label="Scanning tasks", autosize=True, no_close=True):
+        with dpg.window(
+            label="Scanning tasks", autosize=True, no_close=True, pos=(1000, 20)
+        ):
             dpg.add_separator(label="Available scans")
             dpg.add_button(
                 label="Run 3D Scan",
