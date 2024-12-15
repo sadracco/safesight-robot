@@ -1,3 +1,7 @@
+<<<<<<< Updated upstream
+=======
+import threading
+>>>>>>> Stashed changes
 import dearpygui.dearpygui as dpg
 
 from src.controler import Controler
@@ -12,8 +16,12 @@ class Gui:
         dpg.create_viewport(title="Safesight Control")
         dpg.setup_dearpygui()
 
+<<<<<<< Updated upstream
         # movement control
         with dpg.window(label="Movement control", autosize=True):
+=======
+        with dpg.window(label="Movement control", autosize=True, no_close=True):
+>>>>>>> Stashed changes
             dpg.add_text("Use the keyboard to move the robot")
             dpg.add_text("W to move forwards", tag="text_w")
             dpg.add_text("S to move backwards", tag="text_s")

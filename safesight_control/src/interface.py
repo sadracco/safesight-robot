@@ -43,46 +43,28 @@ class Interface:
     def move_right(self):
         self.send_message("right")
 
-    @staticmethod
-    def convert_to_polar(measurements):
-        results = []
-        flag = 1
-        k = 0
-        for i in range(-45, 46, 2):
-            az = math.radians(i)
-            if flag == 1:
-                for j in range(-45, 46, 2):
-                    r = measurements[k] / 5800
-                    ver = math.radians(j)
-                    results.append((r * math.cos(ver) * math.cos(az), r * math.cos(ver) * math.sin(az),r * math.sin(ver)))
-                    k += 1
-            else:
-                for j in range(45, -46, -2):
-                    r = measurements[k] / 5800
-                    ver = math.radians(j)
-                    results.append((r * math.cos(ver) * math.cos(az), r * math.cos(ver) * math.sin(az),r * math.sin(ver)))
-                    k += 1
-            flag *= -1
-        return results
-
-    def get_point_cloud(self):
+    def get_dist_measurements(self):
         measurements = []
-        self.send_message("cloud")
+        self.send_message("scandistance")
+        
         while True:
             data = self.receive_message()
             data = data.split(",")
             for p in data:
                 if p == "\n":
-                    print(measurements)
-                    print(len(measurements))
-                    return self.convert_to_polar(measurements)
+                    return measurements
                 if p != "":
                     measurements.append(int(p))
 
-        
-
-        
-
-
     
-
+    def get_audio_measurements(self):
+        measurements = []
+        self.send_message("scanaudio")
+        while True:
+            data = self.receive_message()
+            data = data.split(",")
+            for p in data:
+                if p == "\n":
+                    return measurements
+                if p != "":
+                    measurements.append(int(p))
