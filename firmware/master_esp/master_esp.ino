@@ -16,15 +16,17 @@
 #define ECHO 22
 #define TRIG 23
 
+#define MICROPHONE_PIN ((int)5)
+#define SAMPLE_RANGE 3000
+
 #define servoHorizontalPin 18
 #define servoVerticalPin 19
 
-#define HORIZ_MIN ((int)45)
-#define HORIZ_MAX ((int)135)
-#define VERTIC_MIN ((int)45)
-#define VERTIC_MAX ((int)135)
+#define HORIZ_MIN ((int)65)
+#define HORIZ_MAX ((int)115)
+#define VERTIC_MIN ((int)90)
+#define VERTIC_MAX ((int)180)
 
-uint8_t pwm_req;
 String request;
 
 const char* ssid = "ESP_safesight";
@@ -40,14 +42,18 @@ WiFiClient client;
 Servo servoHorizontal;
 Servo servoVertical;
 
-volatile int duration;
+int duration;
+
+int audio_data[SAMPLE_RANGE];
+int audio_signal;
 
 // function declaration //
 String removeWhitespaces(String);
 String receive_req(void);
 
-void servo_scan();
-int distance_scan();
+void servo_scan(void);
+int distance_scan(void);
+void audio_scan(void);
 
 void motor_A_forw(void);
 void motor_B_forw(void);
@@ -88,25 +94,42 @@ void setup() {
   digitalWrite(TRIG, LOW);
   pinMode(ECHO, INPUT);
 
+  servoHorizontal.write(90);
+  servoVertical.write(180);
+
+  // Microphone setup
+  pinMode(MICROPHONE_PIN, INPUT);
+  Serial.println(analogRead(MICROPHONE_PIN));
+
   // wifi setup
   if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
     Serial.println("Failed to configure static IP for AP");
   }
 
+  Serial.println(analogRead(MICROPHONE_PIN));
+
   WiFi.softAP(ssid, password);
   Serial.println("Access Point started");
+
+  Serial.println(analogRead(MICROPHONE_PIN));
 
   server.begin();
   Serial.println("Server started");
 
+  Serial.println(analogRead(MICROPHONE_PIN));
+
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
+
+  Serial.println(analogRead(MICROPHONE_PIN));
+
 }
 
 void loop() {
   client = server.available();
   if (client)
   {
+    Serial.println("client connected");
     while (client.connected())
     {
       if (client.available()) 
@@ -136,6 +159,10 @@ void loop() {
         else if (request == "scandistance") 
         {
           servo_scan();
+        }
+        else if (request == "scanaudio") 
+        {
+          audio_scan();
         }
         else 
         {
@@ -171,17 +198,24 @@ String removeWhitespaces(String str)
 
 void servo_scan() 
 {
-  servoHorizontal.write(45);
-  servoVertical.write(45);
+  servoHorizontal.write(HORIZ_MIN);
+  servoVertical.write(VERTIC_MIN);
+
+  client.print(HORIZ_MIN);
+  client.print(',');
+  client.print(HORIZ_MAX);
+  client.print(',');
+  client.print(VERTIC_MIN);
+  client.print(',');
+  client.print(VERTIC_MAX);
+  client.print(',');
+
+  delay(100);
 
   int flag = 1;
   for (int i = HORIZ_MIN; i <= HORIZ_MAX; i+=2) {
     servoHorizontal.write(i);
-
-    Serial.print("horiz: ");
-    Serial.println(i);
-
-    delay(30);
+    delay(100);
     if (flag == 1) {
       for (int j = VERTIC_MIN; j <= VERTIC_MAX; j+=2) {
         servoVertical.write(j);
@@ -193,12 +227,12 @@ void servo_scan()
         Serial.print(duration);
         Serial.print(',');
 
-        delay(50);
+        delay(100);
       }
     } else {
       for (int j = VERTIC_MAX; j >= VERTIC_MIN; j-=2) {
         servoVertical.write(j);
-        
+
         duration = distance_scan();
         client.print(duration);
         client.print(',');
@@ -206,12 +240,15 @@ void servo_scan()
         Serial.print(duration);
         Serial.print(',');
 
-        delay(50);
+        delay(100);
       }
     }
     flag *= -1;
   }
   client.print('\n');
+
+  servoHorizontal.write(90);
+  servoVertical.write(180);
 }
 
 int distance_scan() {
@@ -224,6 +261,29 @@ int distance_scan() {
   if (result > 38000) result = 38000;
    
   return result;
+}
+
+void audio_scan()
+{
+  Serial.println("Sampling...");
+  for (int sampl = 0; sampl < SAMPLE_RANGE; sampl++)
+  {
+    audio_data[sampl] = analogRead(MICROPHONE_PIN);
+    Serial.println(analogRead(MICROPHONE_PIN));
+    delay(10);
+  }
+
+  Serial.println("Sending...");
+  client.print(SAMPLE_RANGE);
+  client.print(',');
+  for (int sampl = 0; sampl < SAMPLE_RANGE; sampl++)
+  {
+    client.print(audio_data[sampl]);
+    client.print(',');  
+    delay(30);
+  }
+  client.print('\n');
+  Serial.println("sending complete");
 }
 
 void motor_A_forw(){
