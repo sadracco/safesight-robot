@@ -5,7 +5,7 @@
 
 #define LED 2
 
-#define IN1 33
+#define IN1 14 // sprawdzić czy działa
 #define IN2 25
 #define IN3 32
 #define IN4 26
@@ -16,7 +16,7 @@
 #define ECHO 22
 #define TRIG 23
 
-#define MICROPHONE_PIN ((int)5)
+#define MICROPHONE_PIN ((int)33)
 #define SAMPLE_RANGE 3000
 
 #define servoHorizontalPin 18
