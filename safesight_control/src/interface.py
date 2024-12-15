@@ -2,10 +2,8 @@ import http
 import http.client
 import socket
 from io import BytesIO
-
 import requests
 from PIL import Image
-
 
 class Interface:
     def __init__(self):
@@ -75,11 +73,21 @@ class Interface:
             data = data.split(",")
             for p in data:
                 if p == "\n":
-                    print(measurements)
-                    print(len(measurements))
                     return measurements
                 if p != "":
                     measurements.append(int(p))
-
+    
+    def get_audio_measurements(self):
+        measurements = []
+        self.send_message("scanaudio")
+        while True:
+            data = self.receive_message()
+            data = data.split(",")
+            for p in data:
+                if p == "\n":
+                    return measurements
+                if p != "":
+                    measurements.append(int(p))
+                    
     def __del__(self):
         self.client_socket.close()

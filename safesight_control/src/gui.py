@@ -1,9 +1,7 @@
 import threading
-
 import dearpygui.dearpygui as dpg
 import matplotlib.pyplot as plt
 from src.controler import Controler
-
 
 class Gui:
     def __init__(self, controler: Controler):
