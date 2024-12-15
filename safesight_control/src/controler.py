@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from src.interface import Interface
 
 
@@ -34,10 +35,15 @@ class Controler:
         vertic_max = measurements[3]
         print(len(measurements))
         results = []
-        flag = 1
+        flag = -1
         k = 4
+<<<<<<< HEAD
         for i in range(horiz_min, horiz_max, 2):
             az = np.radians(i)
+=======
+        for i in range(horiz_max, horiz_min, -2):
+            az = math.radians(i)
+>>>>>>> c62762a (final)
             if flag == 1:
                 for j in range(vertic_min, vertic_max + 1, 2):
                     r = measurements[k] / 5800 + 0.055
@@ -88,6 +94,7 @@ class Controler:
 
     def forward(self):
         self.interface.move_forward()
+<<<<<<< HEAD
 
     def backward(self):
         self.interface.move_backward()
@@ -97,6 +104,21 @@ class Controler:
 
     def right(self):
         self.interface.move_right()
+=======
+        self.is_moving = True
+
+    def backward(self):
+        self.interface.move_backward()
+        self.is_moving = True
+
+    def left(self):
+        self.interface.move_left()
+        self.is_moving = True
+
+    def right(self):
+        self.interface.move_right()
+        self.is_moving = True
+>>>>>>> c62762a (final)
 
     def run_3d_scan(self):
         return self.convert_to_polar(self.interface.get_point_cloud())

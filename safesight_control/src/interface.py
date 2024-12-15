@@ -1,5 +1,3 @@
-import http
-import http.client
 import socket
 import sys
 from io import BytesIO
