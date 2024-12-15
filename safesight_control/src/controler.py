@@ -1,22 +1,25 @@
-class Controler:
-    def __init__(self): ...
 import numpy as np
 from src.interface import Interface
-import math
 
 class Controler:
     def __init__(self):
         self.interface = Interface()
         self.flash_active = False
+        self.is_moving = False
+        self.movement_enabled = True
+        self.scan_canceled = False
 
     def get_camera_view(self):
         data = self.interface.get_image()
         if not data:
             return np.zeros((480, 640, 3), dtype="float32").flatten() / 255
+
         img = np.array(data).astype("float32")
         return img.flatten() / 255
 
     def toggle_flash(self):
+        status = False
+      
         self.flash_active = not self.flash_active
 
         if self.flash_active:
@@ -26,9 +29,7 @@ class Controler:
 
         return self.flash_active
     
-    def get_point_cloud(self):
-        self.interface.connect()
-        measurements = self.interface.get_dist_measurements()
+    def convert_to_polar(self, measurements):
         horiz_min = measurements[0]
         horiz_max = measurements[1]
         vertic_min = measurements[2]
@@ -55,7 +56,7 @@ class Controler:
             flag *= -1
         return results
     
-    def get_audio_scan(self):
+    def run_audio_scan(self):
         signal = self.interface.get_audio_measurements()
         fs = signal[0]
         T = signal[1]
@@ -64,3 +65,30 @@ class Controler:
         fft_result = np.fft.fft(signal[2:]) 
         frequencies = np.fft.fftfreq(len(t), d=1/fs)
         return fft_result[:len(frequencies) // 2], frequencies[:len(frequencies) // 2]  
+
+    def stop(self):
+        if self.is_moving and self.movement_enabled:
+            self.interface.stop()
+
+    def forward(self):
+        if not self.is_moving and self.movement_enabled:
+            self.interface.move_forward()
+            self.is_moving = True
+
+    def backward(self):
+        if not self.is_moving and self.movement_enabled:
+            self.interface.move_backward()
+            self.is_moving = True
+
+    def left(self):
+        if not self.is_moving and self.movement_enabled:
+            self.interface.move_left()
+            self.is_moving = True
+
+    def right(self):
+        if not self.is_moving and self.movement_enabled:
+            self.interface.move_right()
+            self.is_moving = True
+
+    def run_3d_scan(self):
+        return self.convert_to_polar(self.interface.get_point_cloud())
