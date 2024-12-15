@@ -3,8 +3,10 @@ import http.client
 import socket
 import sys
 from io import BytesIO
+
 import requests
 from PIL import Image
+
 
 class Interface:
     def __init__(self):
@@ -20,6 +22,8 @@ class Interface:
             print(f"Unable to connect to {self.master_ip}")
             print(e)
             sys.exit(0)
+
+        self.client_socket.settimeout(None)
 
     def camera_request(self, endpoint):
         try:
@@ -55,6 +59,7 @@ class Interface:
             message = response.decode("utf-8")
             return message
         except socket.error as e:
+            print(e)
             return None
 
     def move_forward(self):
@@ -83,7 +88,7 @@ class Interface:
                     return measurements
                 if p != "":
                     measurements.append(int(p))
-    
+
     def get_audio_measurements(self):
         measurements = []
         self.send_message("scanaudio")
@@ -95,6 +100,6 @@ class Interface:
                     return measurements
                 if p != "":
                     measurements.append(int(p))
-                    
+
     def __del__(self):
         self.client_socket.close()

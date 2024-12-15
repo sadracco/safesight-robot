@@ -1,7 +1,9 @@
 import threading
+
 import dearpygui.dearpygui as dpg
 import matplotlib.pyplot as plt
 from src.controler import Controler
+
 
 class Gui:
     def __init__(self, controler: Controler):
@@ -68,6 +70,32 @@ class Gui:
             dpg.add_separator(label="Scanning status")
             dpg.add_text("No scans running, robot movement enabled", tag="scan_status")
             dpg.add_loading_indicator(show=False, tag="scan_indicator")
+
+            with dpg.plot(label="Signal", height=300, width=700, tag="plot_signal"):
+                dpg.add_plot_axis(dpg.mvXAxis, label="time", auto_fit=True)
+                dpg.add_plot_axis(
+                    dpg.mvYAxis, label="amp", tag="plot_signal_y_axis", auto_fit=True
+                )
+                dpg.add_line_series(
+                    [],
+                    [],
+                    label="signal",
+                    parent="plot_signal_y_axis",
+                    tag="plot_signal_series",
+                )
+
+            with dpg.plot(label="FFT", height=300, width=700, tag="plot_fft"):
+                dpg.add_plot_axis(dpg.mvXAxis, label="Hz", auto_fit=True)
+                dpg.add_plot_axis(
+                    dpg.mvYAxis, label="amp", tag="plot_fft_y_axis", auto_fit=True
+                )
+                dpg.add_line_series(
+                    [],
+                    [],
+                    label="FFT",
+                    parent="plot_fft_y_axis",
+                    tag="plot_fft_series",
+                )
 
         # global keypresses
         with dpg.handler_registry():
@@ -161,8 +189,13 @@ class Gui:
         dpg.set_value("movement_enabled", "Robot movement disabled")
         dpg.configure_item("scan_3d_button", show=False)
         dpg.configure_item("scan_audio_button", show=False)
+        dpg.configure_item("plot_signal", show=False)
+        dpg.configure_item("plot_fft", show=False)
 
-        self.controler.run_audio_scan()
+        freqs, amps, xsignal, signal = self.controler.run_audio_scan()
+        print(freqs)
+        print(amps)
+        print(signal)
 
         dpg.set_value("scan_status", "Audio scan finished")
         dpg.configure_item("scan_indicator", show=False)
@@ -170,6 +203,11 @@ class Gui:
         dpg.set_value("movement_enabled", "Robot movement enabled")
         dpg.configure_item("scan_3d_button", show=True)
         dpg.configure_item("scan_audio_button", show=True)
+
+        dpg.configure_item("plot_signal", show=True)
+        dpg.configure_item("plot_fft", show=True)
+        dpg.set_value("plot_signal_series", [xsignal, signal])
+        dpg.set_value("plot_fft_series", [freqs, amps])
 
     def camera_update_thread(self):
         while True:
