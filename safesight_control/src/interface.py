@@ -1,6 +1,5 @@
 import http
 import http.client
-import math
 import socket
 from io import BytesIO
 
@@ -9,13 +8,13 @@ from PIL import Image
 
 
 class Interface:
-    def __init__(self, ip="192.168.1.1", port=10000):
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.ip = ip
-        self.port = port
+    def __init__(self):
         self.master_ip = "192.168.4.1"
         self.master_port = 10000
         self.camera_ip = "192.168.4.2"
+
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket.connect((self.master_ip, self.master_port))
 
     def camera_request(self, endpoint):
         try:
@@ -24,10 +23,10 @@ class Interface:
             return False
 
     def flashon(self):
-        self.camera_request("flashon")
+        return self.camera_request("flashon")
 
     def flashoff(self):
-        self.camera_request("flashoff")
+        return self.camera_request("flashoff")
 
     def get_image(self):
         response = self.camera_request("image")
@@ -38,13 +37,6 @@ class Interface:
             return Image.open(BytesIO(response.content))
 
         return False
-
-    def connect(self):
-        self.client_socket.connect((self.master_ip, self.master_port))
-
-    def disconnect(self):
-        self.client_socket.close()
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def send_message(self, message):
         try:
@@ -75,43 +67,9 @@ class Interface:
     def move_right(self):
         self.send_message("right")
 
-    @staticmethod
-    def convert_to_polar(measurements):
-        results = []
-        flag = 1
-        k = 0
-        for i in range(-45, 46, 2):
-            az = math.radians(i)
-            if flag == 1:
-                for j in range(-45, 46, 2):
-                    r = measurements[k] / 5800
-                    ver = math.radians(j)
-                    results.append(
-                        (
-                            r * math.cos(ver) * math.cos(az),
-                            r * math.cos(ver) * math.sin(az),
-                            r * math.sin(ver),
-                        )
-                    )
-                    k += 1
-            else:
-                for j in range(45, -46, -2):
-                    r = measurements[k] / 5800
-                    ver = math.radians(j)
-                    results.append(
-                        (
-                            r * math.cos(ver) * math.cos(az),
-                            r * math.cos(ver) * math.sin(az),
-                            r * math.sin(ver),
-                        )
-                    )
-                    k += 1
-            flag *= -1
-        return results
-
     def get_point_cloud(self):
         measurements = []
-        self.send_message("cloud")
+        self.send_message("scandistance")
         while True:
             data = self.receive_message()
             data = data.split(",")
@@ -119,7 +77,7 @@ class Interface:
                 if p == "\n":
                     print(measurements)
                     print(len(measurements))
-                    return self.convert_to_polar(measurements)
+                    return measurements
                 if p != "":
                     measurements.append(int(p))
 

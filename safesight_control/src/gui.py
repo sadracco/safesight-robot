@@ -16,6 +16,9 @@ class Gui:
 
         # movement control
         with dpg.window(label="Movement control", autosize=True, no_close=True):
+            dpg.add_text(
+                "Robot movement enabled", color=(0, 255, 0, 255), tag="movement_enabled"
+            )
             dpg.add_text("Use the keyboard to move the robot")
             dpg.add_text("W to move forwards", tag="movement_w")
             dpg.add_text("S to move backwards", tag="movement_s")
@@ -46,12 +49,21 @@ class Gui:
             dpg.add_image("camera_view")
 
         # sensing tasks
-        with dpg.window(label="Sensing tasks", autosize=True, no_close=True):
+        with dpg.window(label="Scanning tasks", autosize=True, no_close=True):
+            dpg.add_separator(label="Available scans")
             dpg.add_button(
-                label="Toggle flash",
-                callback=self.camera_flash_toggle_callback,
-                tag="camera_flash_toggle",
+                label="Run 3D Scan",
+                callback=self.scan_3d_activate_callback,
+                tag="scan_3d_button",
             )
+            dpg.add_button(
+                label="Run audio Scan",
+                callback=self.scan_audio_activate_callback,
+                tag="scan_audio_button",
+            )
+            dpg.add_separator(label="Scanning status")
+            dpg.add_text("No scans running, robot movement enabled", tag="scan_status")
+            dpg.add_loading_indicator(show=False, tag="scan_indicator")
 
         # global keypresses
         with dpg.handler_registry():
@@ -116,8 +128,44 @@ class Gui:
     def camera_flash_toggle_callback(self, sender, app_data, user_data):
         if self.controler.toggle_flash():
             dpg.configure_item("camera_flash_indicator", color=(0, 255, 0, 255))
+            dpg.set_value("camera_flash_indicator", "ON")
         else:
             dpg.configure_item("camera_flash_indicator", color=(255, 0, 0, 255))
+            dpg.set_value("camera_flash_indicator", "OFF")
+
+    def scan_3d_activate_callback(self, sender, app_data, user_data):
+        dpg.set_value("scan_status", "3D scan in progress")
+        dpg.configure_item("scan_indicator", show=True)
+        dpg.configure_item("movement_enabled", color=(255, 0, 0, 255))
+        dpg.set_value("movement_enabled", "Robot movement disabled")
+        dpg.configure_item("scan_3d_button", show=False)
+        dpg.configure_item("scan_audio_button", show=False)
+
+        self.controler.run_3d_scan()
+
+        dpg.set_value("scan_status", "3D scan finished")
+        dpg.configure_item("scan_indicator", show=False)
+        dpg.configure_item("movement_enabled", color=(0, 255, 0, 255))
+        dpg.set_value("movement_enabled", "Robot movement enabled")
+        dpg.configure_item("scan_3d_button", show=True)
+        dpg.configure_item("scan_audio_button", show=True)
+
+    def scan_audio_activate_callback(self, sender, app_data, user_data):
+        dpg.set_value("scan_status", "Audio scan in progress")
+        dpg.configure_item("scan_indicator", show=True)
+        dpg.configure_item("movement_enabled", color=(255, 0, 0, 255))
+        dpg.set_value("movement_enabled", "Robot movement disabled")
+        dpg.configure_item("scan_3d_button", show=False)
+        dpg.configure_item("scan_audio_button", show=False)
+
+        self.controler.run_audio_scan()
+
+        dpg.set_value("scan_status", "Audio scan finished")
+        dpg.configure_item("scan_indicator", show=False)
+        dpg.configure_item("movement_enabled", color=(0, 255, 0, 255))
+        dpg.set_value("movement_enabled", "Robot movement enabled")
+        dpg.configure_item("scan_3d_button", show=True)
+        dpg.configure_item("scan_audio_button", show=True)
 
     def camera_update_thread(self):
         while True:
